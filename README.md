@@ -1,2 +1,2 @@
 # change_organization
-Changes Organization
+Changes organization instances
