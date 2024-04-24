@@ -182,7 +182,7 @@ function source_zshrc_file() {
 
 function select_docker_startup() {
     local options=("lose local db data" "persist local db data" "quit") 
-    echo "Input an option: "
+    echo "Input an option (1/2/3): "
 
     select option in "${options[@]}"; do
         case $option in
