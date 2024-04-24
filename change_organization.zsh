@@ -51,7 +51,7 @@ function set_new_orleans() {
     if [[ $? ]]; then
         local new_orleans="$new_orleans_directory"
         echo "Your path is: $new_orleans"
-        sed -i'.bak' '1s|^|'"export NOIPM_APP_INSTANCE_FILES_DIR=$new_orleans"'\n|' ~/.zshrc
+        sed -i'.bak' '1s|^|'"export NOIPM_APP_INSTANCE_FILES_DIR=\"$new_orleans\""'\n|' ~/.zshrc
     else
         echo "directory does not exist"
     fi
@@ -64,7 +64,7 @@ function set_hawaii() {
     if [[ $? ]]; then
         local hawaii="$hawaii_directory"
         echo "Your path is: $hawaii"
-        sed -i'.bak' '1s|^|'"export HAWAII_APP_INSTANCE_FILES_DIR=$hawaii"'\n|' ~/.zshrc
+        sed -i'.bak' '1s|^|'"export HAWAII_APP_INSTANCE_FILES_DIR=\"$hawaii\""'\n|' ~/.zshrc
     else
         echo "directory does not exist"
     fi
