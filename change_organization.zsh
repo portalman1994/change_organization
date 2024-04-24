@@ -191,18 +191,18 @@ function select_docker_startup() {
                 cd ..
                 echo "Running docker compose down..."
                 docker compose down
-                echo "Running docker compose up app..."
-                docker compose up app
+                echo "Running docker compose up app in detached mode..."
+                docker compose up app -d
                 echo "Done!"
                 break
                 ;;
             "persist local db data")
                 echo "Changing directory..."
                 cd ..
-                echo "Running docker compose up app..."
-                docker compose up app
-                echo "Running docker compose run --rm app yarn reseed:db"
-                docker compose run --rm app yarn reseed:db
+                echo "Running docker compose up app in detached mode..."
+                docker compose up app -d
+                echo "Running docker compose run --rm app yarn reseed:db in detached mode"
+                docker compose run -d --rm app yarn reseed:db
                 echo "Done!"
                 break
                 ;;
