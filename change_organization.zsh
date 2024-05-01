@@ -1,12 +1,30 @@
 #!/bin/zsh
 
+function verify_subdirectory() {
+    local full_path="$1"
+    local subdirectory="$(basename "$full_path")"
+    if [[ "$subdirectory" == "instance-files" ]]; then
+        echo "Your path includes instance-files subdirectory"
+        return 0
+    else
+        echo "Your path needs the instance-files subdirectory"
+        return 1
+    fi
+}
+
 function verify_directory() {
     local directory="$1"
     echo "Verifying if directory exists"
 
     if [[ -d "$directory" ]]; then
         echo "The directory exists"
-        return 0
+        echo "Checking if path includes instance-files subdirectory"
+        verify_subdirectory "$directory"
+        if [[ $? -eq 0 ]]; then
+            return 0
+        else
+            return 1
+        fi
     else
         echo "The directory does not exist"
         return 1
