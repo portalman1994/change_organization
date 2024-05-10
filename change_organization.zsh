@@ -38,18 +38,18 @@ function change_organization() {
     echo "The existing organization is: $existing_organization"
 
     if [[ "$existing_organization" == '"$HAWAII_APP_INSTANCE_FILES_DIR"' ]]; then
-        echo "Changing existing organization to NOIPM_APP_INSTANCE_FILES_DIR"
+        echo "Changing from HAWAII organization to NOIPM organization"
         sed -i'.bak' 's/"$HAWAII_APP_INSTANCE_FILES_DIR"/"$NOIPM_APP_INSTANCE_FILES_DIR"/g' ~/.zshrc
     elif [[ "$existing_organization" == '"$NOIPM_APP_INSTANCE_FILES_DIR"' ]]; then
-        echo "Changing existing organization to HAWAII_APP_INSTANCE_FILES_DIR"
+        echo "Changing NOIPM organization to HAWAII organization"
         sed -i'.bak' 's/"$NOIPM_APP_INSTANCE_FILES_DIR"/"$HAWAII_APP_INSTANCE_FILES_DIR"/g' ~/.zshrc
     else 
         local hawaii_pattern='hawaii'
         if [[ "$existing_organization" =~ $hawaii_pattern ]]; then
-            echo "Changing existing organization to NOIPM_APP_INSTANCE_FILES_DIR"
+            echo "Changing from HAWAII organization to NOIPM organization"
             sed -i'.bak' 's|'"export REACT_APP_INSTANCE_FILES_DIR=$existing_organization"'|export REACT_APP_INSTANCE_FILES_DIR="$NOIPM_APP_INSTANCE_FILES_DIR"|g' ~/.zshrc
         else
-            echo "Changing existing organization to HAWAII_APP_INSTANCE_FILES_DIR"
+            echo "Changing NOIPM organization to HAWAII organization"
             sed -i'.bak' 's|'"export REACT_APP_INSTANCE_FILES_DIR=$existing_organization"'|export REACT_APP_INSTANCE_FILES_DIR="$HAWAII_APP_INSTANCE_FILES_DIR"|g' ~/.zshrc
         fi
     fi
@@ -75,7 +75,7 @@ function set_instance_directory() {
 function set_new_orleans() {
     local continue_prompt=true
         while $continue_prompt; do
-        echo -n "Please input full path to NOIPM instance directory: " 
+        echo -n "Please input full path to NOIPM instance-files subdirectory: " 
         read new_orleans_directory
         verify_directory "$new_orleans_directory"
         if [[ $? -eq 0 ]]; then
@@ -97,7 +97,7 @@ function set_new_orleans() {
 function set_hawaii() {
     local continue_prompt=true
     while $continue_prompt; do
-        echo -n "Please input full path to HAWAII instance directory: " 
+        echo -n "Please input full path to HAWAII instance-files subdirectory: " 
         read hawaii_directory
         verify_directory "$hawaii_directory"
         if [[ $? -eq 0 ]]; then
@@ -167,19 +167,6 @@ function change_docker_organization() {
     fi
 }
 
-function detect_current_directory() {
-    local current_directory_path="$(pwd)"
-    local parent_directory="$(basename "$current_directory_path")"
-    echo "$parent_directory"
-    echo "Detecting current directory..."
-    if [[ "$parent_directory" == "scripts" ]]; then
-        change_docker_organization
-    else
-        echo "Please run script within the scripts directory of complaint manager"
-        exit 1
-    fi
-}
-
 function remove_docker_backup_file() {
     echo "Removing script generated backup files"
     rm ../docker-compose.yml.bak
@@ -200,37 +187,53 @@ function source_zshrc_file() {
 
 function select_docker_startup() {
     local options=("lose local db data" "persist local db data" "quit") 
-    echo "Input an option (1/2/3): "
+    echo "Input an option (1/2): "
 
     select option in "${options[@]}"; do
         case $option in
             "lose local db data")
-                echo "Changing directory..."
+                echo "Changing to parent directory..."
                 cd ..
                 echo "Running docker compose down..."
                 docker compose down
                 echo "Running docker compose up app in detached mode..."
                 docker compose up app -d
                 echo "Done!"
+                echo "Please open a new terminal and close any old terminals"
                 break
                 ;;
             "persist local db data")
-                echo "Changing directory..."
+                echo "Changing to parent directory..."
                 cd ..
                 echo "Running docker compose up app in detached mode..."
                 docker compose up app -d
                 echo "Running docker compose run --rm app yarn reseed:db in detached mode"
                 docker compose run -d --rm app yarn reseed:db
                 echo "Done!"
+                echo "Please open a new terminal and close any old terminals"
                 break
-                ;;
-            "quit")
-                echo "Quitting application..."
-                break 2
                 ;;
             *) echo "invalid option";;
         esac
     done
+}
+
+function change_current_directory() {    
+    local script_directory="$(dirname ${(%):-%x})"
+    cd "$script_directory"
+}
+
+function detect_current_directory() {
+    local current_directory_path="$(pwd)"
+    local parent_directory="$(basename "$current_directory_path")"
+    echo "$parent_directory"
+    echo "Detecting current directory..."
+    if [[ "$parent_directory" == "scripts" ]]; then
+        change_docker_organization
+    else
+        echo "Please run script within the scripts directory of complaint manager"
+        exit 1
+    fi
 }
 
 function detect_environment_variables() {
@@ -245,6 +248,7 @@ function rerun_startup() {
     select_docker_startup
 }
 
+change_current_directory
 detect_current_directory
 detect_environment_variables
 remove_docker_backup_file
