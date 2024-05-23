@@ -31,6 +31,23 @@ function verify_directory() {
     fi
 }
 
+function change_docker_organization() {
+    local organization="$1"
+    local file_path="../docker-compose.yml"
+    local file_content=$(<"$file_path")
+    local existing_organization=$(grep "ORG" <<< "$file_content" | cut -d '=' -f 2)
+    echo "$existing_organization"
+    echo "Changing ORG variable in docker-compose.yml"
+
+     if [[ "$organization" == "NOIPM" ]]; then
+        echo "Changing ORG from HAWAII to NOIPM"
+        sed -i'.bak' 's/HAWAII/NOIPM/g' "$file_path"
+    else
+        echo "Changing ORG from NOIPM to HAWAII"
+        sed -i'.bak' 's/NOIPM/HAWAII/g' "$file_path"
+    fi
+}
+
 function change_organization() {
     local file_content=$(<~/.zshrc)
     local existing_organization=$(grep "^export REACT_APP_INSTANCE_FILES_DIR" <<< "$file_content" | cut -d '=' -f 2)
@@ -40,17 +57,23 @@ function change_organization() {
     if [[ "$existing_organization" == '"$HAWAII_APP_INSTANCE_FILES_DIR"' ]]; then
         echo "Changing from HAWAII organization to NOIPM organization"
         sed -i'.bak' 's/"$HAWAII_APP_INSTANCE_FILES_DIR"/"$NOIPM_APP_INSTANCE_FILES_DIR"/g' ~/.zshrc
+        change_docker_organization "NOIPM"
     elif [[ "$existing_organization" == '"$NOIPM_APP_INSTANCE_FILES_DIR"' ]]; then
         echo "Changing NOIPM organization to HAWAII organization"
         sed -i'.bak' 's/"$NOIPM_APP_INSTANCE_FILES_DIR"/"$HAWAII_APP_INSTANCE_FILES_DIR"/g' ~/.zshrc
+        change_docker_organization "HAWAII"
+
     else 
         local hawaii_pattern='hawaii'
         if [[ "$existing_organization" =~ $hawaii_pattern ]]; then
             echo "Changing from HAWAII organization to NOIPM organization"
             sed -i'.bak' 's|'"export REACT_APP_INSTANCE_FILES_DIR=$existing_organization"'|export REACT_APP_INSTANCE_FILES_DIR="$NOIPM_APP_INSTANCE_FILES_DIR"|g' ~/.zshrc
+            change_docker_organization "NOIPM"
+ 
         else
             echo "Changing NOIPM organization to HAWAII organization"
             sed -i'.bak' 's|'"export REACT_APP_INSTANCE_FILES_DIR=$existing_organization"'|export REACT_APP_INSTANCE_FILES_DIR="$HAWAII_APP_INSTANCE_FILES_DIR"|g' ~/.zshrc
+            change_docker_organization "HAWAII"
         fi
     fi
 }
@@ -151,22 +174,6 @@ function detect_hawaii() {
     fi
 }
 
-function change_docker_organization() {
-    local file_path="../docker-compose.yml"
-    local file_content=$(<"$file_path")
-    local existing_organization=$(grep "ORG" <<< "$file_content" | cut -d '=' -f 2)
-    echo "$existing_organization"
-    echo "Changing ORG variable in docker-compose.yml"
-
-    if [[ "$existing_organization" == "HAWAII" ]]; then
-        echo "Changing ORG from HAWAII to NOIPM"
-        sed -i'.bak' 's/HAWAII/NOIPM/g' "$file_path"
-    else
-        echo "Changing ORG from NOIPM to HAWAII"
-        sed -i'.bak' 's/NOIPM/HAWAII/g' "$file_path"
-    fi
-}
-
 function remove_docker_backup_file() {
     echo "Removing script generated backup files"
     rm ../docker-compose.yml.bak
@@ -229,7 +236,7 @@ function detect_current_directory() {
     echo "$parent_directory"
     echo "Detecting current directory..."
     if [[ "$parent_directory" == "scripts" ]]; then
-        change_docker_organization
+        detect_environment_variables
     else
         echo "Please run script within the scripts directory of complaint manager"
         exit 1
@@ -250,6 +257,5 @@ function rerun_startup() {
 
 change_current_directory
 detect_current_directory
-detect_environment_variables
 remove_docker_backup_file
 rerun_startup
